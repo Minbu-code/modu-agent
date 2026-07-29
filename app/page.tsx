@@ -69,7 +69,7 @@ function Sidebar({ activeNav, onNavigate, session, onSignOut }: { activeNav: str
     <div className="brand"><img className="brand-mark brand-logo" src="/modu-logo.png" alt="모두의 학폭비서 로고" /><div><strong>모두의 학폭비서</strong><span>학교 업무 지원 도구</span></div></div>
     <div className="profile-card"><div className="avatar">{(session.user.email ?? "담").slice(0, 1).toUpperCase()}</div><div><strong>{session.user.email}</strong><span>담당교사 계정</span></div><button aria-label="로그아웃" onClick={onSignOut}>↪</button></div>
     <nav className="nav-list" aria-label="주요 메뉴">{items.map((item) => <button key={item} className={activeNav === item ? "nav-item active" : "nav-item"} onClick={() => onNavigate(item)}><span className="nav-icon">{item === "대시보드" ? "⌂" : item === "사안 관리" ? "▤" : item === "AI 업무지원" ? "✦" : "◷"}</span>{item}</button>)}</nav>
-    <div className="sidebar-bottom"><button className="nav-item" onClick={() => onNavigate("개인 설정")}><span className="nav-icon">⚙</span>개인 설정</button><button className="nav-item" onClick={onSignOut}><span className="nav-icon">↪</span>로그아웃</button><div className="privacy-note"><span>✓</span><div><strong>개인정보 보호 중</strong><small>민감정보는 저장·전송 전 차단됩니다.</small></div></div></div>
+    <div className="sidebar-bottom"><button className="nav-item" onClick={() => onNavigate("개인 설정")}><span className="nav-icon">⚙</span>개인 설정</button><button className="nav-item" onClick={onSignOut}><span className="nav-icon">↪</span>로그아웃</button><button className="readability-toggle" onClick={() => document.body.classList.toggle("large-text")}>Aa <span>글씨 크게</span></button><div className="privacy-note"><span>✓</span><div><strong>개인정보 보호 중</strong><small>민감정보는 저장·전송 전 차단됩니다.</small></div></div></div>
   </aside>;
 }
 

@@ -66,3 +66,19 @@ button { cursor: pointer; }
 .case-delete:hover { background: #fff0f0; color: #bd4f52; }
 .delete-confirm-button { background: #c34d50; }
 .delete-confirm-button:hover { background: #a9363a; }
+.readability-toggle { width: 100%; border: 1px solid #dbe3ff; border-radius: 8px; background: #f6f8ff; color: var(--blue); padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 700; }
+.readability-toggle span { margin-left: 6px; }
+.readability-toggle:hover { background: var(--blue-soft); }
+body.large-text .workspace { font-size: 1.12rem; }
+body.large-text .case-filter, body.large-text .history-toolbar { font-size: 14px; }
+body.large-text .case-filter input, body.large-text .history-toolbar input, body.large-text .history-toolbar select { font-size: 14px; padding: 11px 12px; }
+body.large-text .case-row { padding-top: 21px; padding-bottom: 21px; }
+body.large-text .case-number { font-size: 14px; }
+body.large-text .case-copy strong { font-size: 17px; }
+body.large-text .case-copy span { font-size: 14px; }
+body.large-text .case-stage span, body.large-text .case-due small { font-size: 13px; }
+body.large-text .status { font-size: 12px; padding: 7px 10px; }
+body.large-text .case-summary span { font-size: 12px; }
+body.large-text .case-summary strong { font-size: 14px; }
+body.large-text .task-header h3 { font-size: 16px; }
+body.large-text .task-header span, body.large-text .task strong, body.large-text .task small { font-size: 13px; }
