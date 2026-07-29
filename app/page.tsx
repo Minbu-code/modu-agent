@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
@@ -117,6 +117,11 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [questionAnswer, setQuestionAnswer] = useState("");
   const [questionLoading, setQuestionLoading] = useState(false);
+  const [autoLogoutMinutes, setAutoLogoutMinutes] = useState(30);
+  const [confirmAccountDelete, setConfirmAccountDelete] = useState(false);
+  const [accountDeleteBusy, setAccountDeleteBusy] = useState(false);
+  const [accountDeleteError, setAccountDeleteError] = useState("");
+  const lastActivityRef = useRef(Date.now());
 
   const selected = cases.find((item) => item.id === selectedId) ?? cases[0];
   const completed = tasks.filter((task) => task.done).length;
@@ -136,6 +141,22 @@ export default function Home() {
     return () => { mounted = false; listener.subscription.unsubscribe(); };
   }, []);
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem("modu-auto-logout-minutes");
+    if (saved) setAutoLogoutMinutes(Number(saved));
+  }, []);
+
+  useEffect(() => {
+    if (!session || autoLogoutMinutes === 0) return;
+    const resetActivity = () => { lastActivityRef.current = Date.now(); };
+    const events = ["click", "keydown", "mousemove", "touchstart"];
+    events.forEach((event) => window.addEventListener(event, resetActivity));
+    const timer = window.setInterval(() => {
+      if (Date.now() - lastActivityRef.current >= autoLogoutMinutes * 60 * 1000) void supabase.auth.signOut();
+    }, 15000);
+    return () => { events.forEach((event) => window.removeEventListener(event, resetActivity)); window.clearInterval(timer); };
+  }, [session, autoLogoutMinutes]);
+
   async function loadCases(userId: string) {
     setDataLoading(true);
     const { data } = await supabase.from("cases").select("*").eq("user_id", userId).order("created_at", { ascending: false });
@@ -151,6 +172,7 @@ export default function Home() {
 
   async function selectCase(item: CaseItem) { setSelectedId(item.id); await loadTasks(item.id, item.stage); }
   async function signOut() { await supabase.auth.signOut(); }
+  function updateAutoLogout(value: string) { const minutes = Number(value); setAutoLogoutMinutes(minutes); window.localStorage.setItem("modu-auto-logout-minutes", value); lastActivityRef.current = Date.now(); }
 
   async function handleAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setAuthBusy(true); setAuthError("");
@@ -215,6 +237,14 @@ export default function Home() {
     }
   }
 
+  async function deleteAccount() {
+    if (!session) return;
+    setAccountDeleteBusy(true); setAccountDeleteError("");
+    const { error } = await supabase.functions.invoke("delete-account");
+    if (error) { setAccountDeleteError("계정 삭제 기능이 아직 Supabase에 배포되지 않았습니다. 관리자에게 Edge Function 배포를 요청해 주세요."); setAccountDeleteBusy(false); return; }
+    await supabase.auth.signOut({ scope: "local" });
+  }
+
   function askAiQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const submittedQuestion = question.trim();
@@ -257,8 +287,9 @@ export default function Home() {
   const renderAiPanel = (compact = false) => <section className={compact ? "ai-panel" : "panel ai-full-panel"}><div className="ai-header"><div className="ai-orb">✦</div><div><p className="section-kicker">AI 업무 도우미</p><h2>지금 무엇을 도와드릴까요?</h2></div></div><p className="ai-caption">선택한 사안의 비식별 정보만 사용합니다. AI 결과는 참고용 초안이며 담당교사의 최종 확인이 필요합니다.</p><div className="ai-tabs"><button className={aiMode === "guide" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("guide")}>업무 안내</button><button className={aiMode === "report" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("report")}>보고서 초안</button><button className={aiMode === "message" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("message")}>안내 문구</button></div><div className="ai-result"><span className="result-label">{aiMode === "guide" ? "NEXT STEP" : aiMode === "report" ? "REPORT DRAFT" : "MESSAGE DRAFT"}</span><p>{aiLoading ? "초안을 준비하고 있습니다..." : aiContent}</p><div className="result-actions"><button onClick={() => navigator.clipboard?.writeText(aiContent)}>복사</button><button onClick={() => { setAiLoading(true); window.setTimeout(() => setAiLoading(false), 650); }}>↻ 다시 생성</button><button onClick={saveDocument}>문서로 저장</button></div></div><button className="ask-button" onClick={() => setQuestionOpen((current) => !current)}>✦ AI에게 질문하기</button>{questionOpen && <div className="ai-question-box"><form onSubmit={askAiQuestion}><label htmlFor="ai-question">원하는 질문을 입력하세요</label><textarea id="ai-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="예: 지금 단계에서 보호자에게 무엇을 안내해야 하나요?" rows={3} required /><div className="question-actions"><button type="button" className="secondary-button" onClick={() => { setQuestionOpen(false); setQuestionAnswer(""); }}>닫기</button><button type="submit" className="primary-button">{questionLoading ? "답변 준비 중..." : "질문하기"}</button></div></form>{questionAnswer && <div className="ai-question-answer"><span className="result-label">AI ANSWER</span><p>{questionAnswer}</p><button className="text-button" onClick={() => navigator.clipboard?.writeText(questionAnswer)}>답변 복사</button></div>}</div>}</section>;
 
   let pageContent: React.ReactNode;
-  if (!cases.length) pageContent = <section className="page-panel empty-case-panel"><div className="empty-state"><div>▤</div><h3>등록된 사안이 없습니다</h3><p>사안을 등록하면 이곳에서 체크리스트와 진행 상황을 관리할 수 있습니다.</p><button className="primary-button" onClick={() => setShowRegister(true)}>+ 첫 사안 등록하기</button></div></section>;
+  if (!cases.length && activeNav !== "개인 설정") pageContent = <section className="page-panel empty-case-panel"><div className="empty-state"><div>▤</div><h3>등록된 사안이 없습니다</h3><p>사안을 등록하면 이곳에서 체크리스트와 진행 상황을 관리할 수 있습니다.</p><button className="primary-button" onClick={() => setShowRegister(true)}>+ 첫 사안 등록하기</button></div></section>;
   else if (activeNav === "사안 관리") pageContent = <section className="page-panel"><div className="panel-heading"><div><p className="section-kicker">CASE MANAGEMENT</p><h2>사안 관리</h2></div><button className="primary-button" onClick={() => setShowRegister(true)}>+ 사안 등록</button></div><div className="case-filter"><span>전체 사안 {cases.length}건</span><input placeholder="사안번호 또는 제목 검색" onChange={(event) => { const value = event.target.value.toLowerCase(); setCases(value ? cases.filter((item) => `${item.number} ${item.title}`.toLowerCase().includes(value)) : cases); }} /></div><CaseList cases={cases} selectedId={selected.id} onSelect={selectCase} onDelete={requestDeleteCase} /><Workflow selected={selected} tasks={tasks} onToggle={toggleTask} onAskAdvance={() => setConfirmAdvance(true)} onAskClosure={() => setConfirmClosure(true)} />{deleteTarget && <div className="modal-backdrop"><div className="modal confirm-modal" role="dialog" aria-modal="true"><div className="caution-icon">!</div><h2>사안을 삭제할까요?</h2><p><strong>{deleteTarget.number}</strong> 사안을 삭제하면 관련 체크리스트와 문서 기록도 함께 삭제됩니다. 계속하시겠습니까?</p>{deleteError && <div className="privacy-warning">⚠ {deleteError}</div>}<div className="modal-actions"><button className="secondary-button" onClick={() => setDeleteTarget(null)}>취소</button><button className="primary-button delete-confirm-button" onClick={deleteCase}>삭제하기</button></div></div></div>}</section>;
+  else if (activeNav === "개인 설정") pageContent = <section className="page-panel settings-page"><div><p className="section-kicker">PERSONAL SETTINGS</p><h2>개인 설정</h2><p className="page-description">업무 화면과 계정 보안 설정을 관리합니다.</p></div><section className="settings-card"><div><h3>자동 로그아웃</h3><p>설정한 시간 동안 활동이 없으면 안전을 위해 자동으로 로그아웃합니다.</p></div><select value={autoLogoutMinutes} onChange={(event) => updateAutoLogout(event.target.value)} aria-label="자동 로그아웃 시간"><option value={0}>사용 안 함</option><option value={15}>15분</option><option value={30}>30분</option><option value={60}>1시간</option><option value={120}>2시간</option></select></section><section className="settings-card danger-settings"><div><h3>회원 탈퇴</h3><p>탈퇴하면 모든 사안, 체크리스트, 생성 문서, 활동 기록과 계정이 영구 삭제됩니다.</p></div><button className="danger-outline-button" onClick={() => { setAccountDeleteError(""); setConfirmAccountDelete(true); }}>회원 탈퇴</button></section>{confirmAccountDelete && <div className="modal-backdrop"><div className="modal confirm-modal" role="dialog" aria-modal="true"><div className="caution-icon">!</div><h2>정말 탈퇴하시겠습니까?</h2><p>회원 탈퇴 시 <strong>모든 사안·문서·체크리스트·활동 기록과 계정이 영구 삭제</strong>되며 복구할 수 없습니다. 이 내용을 확인하셨습니까?</p>{accountDeleteError && <div className="privacy-warning">⚠ {accountDeleteError}</div>}<div className="modal-actions"><button className="secondary-button" onClick={() => setConfirmAccountDelete(false)}>취소</button><button className="primary-button delete-confirm-button" onClick={deleteAccount} disabled={accountDeleteBusy}>{accountDeleteBusy ? "삭제 처리 중..." : "확인하고 탈퇴"}</button></div></div></div>}</section>;
   else if (activeNav === "AI 업무지원") pageContent = <section className="page-panel"><div className="panel-heading"><div><p className="section-kicker">AI WORKSPACE</p><h2>AI 업무지원</h2><p className="page-description">현재 선택된 사안에 필요한 초안을 만들고 저장합니다.</p></div><span className={statusClass(selected.status)}>{selected.number} · {selected.stage}</span></div><div className="tool-card-grid"><button className="tool-card" onClick={() => setAiMode("guide")}><span>✦</span><strong>절차 안내</strong><small>현재 단계의 다음 업무를 확인합니다.</small></button><button className="tool-card" onClick={() => setAiMode("report")}><span>▤</span><strong>관리자 보고 초안</strong><small>비식별 사안 경과를 보고서 형태로 정리합니다.</small></button><button className="tool-card" onClick={() => setAiMode("message")}><span>◌</span><strong>안내 문구 초안</strong><small>중립적인 안내 문구를 작성합니다.</small></button></div>{renderAiPanel(false)}</section>;
   else if (activeNav === "문서 이력") pageContent = <section className="page-panel"><div className="panel-heading"><div><p className="section-kicker">DOCUMENT HISTORY</p><h2>문서 이력</h2></div><span className="history-count">{documents.length}건</span></div><div className="history-toolbar"><input placeholder="문서 제목 또는 사안번호 검색" /><select defaultValue="all"><option value="all">전체 문서 유형</option><option>관리자 보고</option><option>보호자 안내</option><option>업무 요약</option></select></div>{documents.length === 0 ? <div className="empty-state"><div>▤</div><h3>저장된 문서가 없습니다</h3><p>AI 업무지원에서 초안을 만든 뒤 ‘문서로 저장’을 눌러 보세요.</p><button className="secondary-button" onClick={() => setActiveNav("AI 업무지원")}>AI 업무지원으로 이동</button></div> : <div className="document-list">{documents.map((doc) => <article className="document-row" key={doc.id}><div><span className="document-type">{doc.type}</span><h3>{doc.title}</h3><p>{doc.caseNumber} · {doc.createdAt}</p></div><div><span className="status status-wait">{doc.status}</span><button className="text-button">열어보기</button></div></article>)}</div>}</section>;
   else pageContent = <><div className="content-grid"><div className="main-column"><section className="metric-grid"><button className={metricFilter === "active" ? "metric-card metric-clickable active-metric" : "metric-card metric-clickable"} onClick={() => setMetricFilter(metricFilter === "active" ? null : "active")}><div className="metric-label"><span className="metric-dot blue" />진행 중인 사안</div><strong>{activeCaseCount}<small>건</small></strong><span className="metric-foot">등록된 사안 기준 · 클릭해서 보기</span></button><button className={metricFilter === "check" ? "metric-card metric-clickable active-metric" : "metric-card metric-clickable"} onClick={() => setMetricFilter(metricFilter === "check" ? null : "check")}><div className="metric-label"><span className="metric-dot orange" />오늘 확인할 업무</div><strong>{checkCaseCount}<small>건</small></strong><span className="metric-foot">진행 중인 사안 기준 · 클릭해서 보기</span></button><button className={metricFilter === "urgent" ? "metric-card metric-clickable active-metric" : "metric-card metric-clickable"} onClick={() => setMetricFilter(metricFilter === "urgent" ? null : "urgent")}><div className="metric-label"><span className="metric-dot red" />마감 임박 업무</div><strong>{urgentCaseCount}<small>건</small></strong><span className="metric-foot danger-text">오늘 마감 사안 기준 · 클릭해서 보기</span></button><button className={metricFilter === "closing" ? "metric-card metric-clickable active-metric" : "metric-card metric-clickable"} onClick={() => setMetricFilter(metricFilter === "closing" ? null : "closing")}><div className="metric-label"><span className="metric-dot green" />종결 대기 사안</div><strong>{closingCaseCount}<small>건</small></strong><span className="metric-foot">조치·검토 대기 기준 · 클릭해서 보기</span></button></section><MetricDetail filter={metricFilter} cases={cases} selectedId={selected.id} tasks={tasks} onSelect={selectCase} onClear={() => setMetricFilter(null)} /><section className="panel case-panel"><div className="panel-heading"><div><p className="section-kicker">MY CASES</p><h2>최근 사안</h2></div><button className="text-button" onClick={() => setActiveNav("사안 관리")}>전체 보기 →</button></div><CaseList cases={cases} selectedId={selected.id} onSelect={selectCase} /></section><Workflow selected={selected} tasks={tasks} onToggle={toggleTask} onAskAdvance={() => setConfirmAdvance(true)} onAskClosure={() => setConfirmClosure(true)} /></div><aside className="right-column">{renderAiPanel(true)}<section className="panel caution-panel"><div className="panel-heading"><div><p className="section-kicker">CHECK BEFORE YOU USE</p><h3>담당교사 확인사항</h3></div><span className="caution-icon">!</span></div><ul><li>확인된 사실과 추정 내용을 구분했나요?</li><li>학생을 특정할 수 있는 정보가 없나요?</li><li>학교 지침과 실제 사실관계를 확인했나요?</li></ul></section></aside></div></>;
