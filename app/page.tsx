@@ -74,7 +74,7 @@ function Sidebar({ activeNav, onNavigate, session, onSignOut }: { activeNav: str
 }
 
 function CaseList({ cases, selectedId, onSelect }: { cases: CaseItem[]; selectedId: string; onSelect: (item: CaseItem) => void }) {
-  return <div className="case-list">{cases.map((item) => <button key={item.id} className={selectedId === item.id ? "case-row selected" : "case-row"} onClick={() => onSelect(item)}><div className="case-number">{item.number}</div><div className="case-copy"><strong>{item.title}</strong><span>{item.summary}</span></div><div className="case-stage"><span>{item.stage}</span><div className="mini-progress"><i style={{ width: `${item.progress}%` }} /></div></div><div className="case-due"><span className={statusClass(item.status)}>{item.status}</span><small>{item.due}</small></div><span className="chevron">›</span></button>)}</div>;
+  return <div className="case-list">{cases.map((item) => <button key={item.id} className={selectedId === item.id ? "case-row selected" : "case-row"} onClick={() => onSelect(item)}><div className="case-number">{item.number}</div><div className="case-copy"><strong>{item.title}</strong><span>{item.date} · {item.location}</span></div><div className="case-stage"><span>{item.stage}</span><div className="mini-progress"><i style={{ width: `${item.progress}%` }} /></div></div><div className="case-due"><span className={statusClass(item.status)}>{item.status}</span><small>{item.due}</small></div><span className="chevron">›</span></button>)}</div>;
 }
 
 function Workflow({ selected, tasks, onToggle, onAskAdvance, onAskClosure }: { selected: CaseItem; tasks: Task[]; onToggle: (index: number) => void; onAskAdvance: () => void; onAskClosure: () => void }) {

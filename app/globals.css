@@ -52,3 +52,11 @@ button { cursor: pointer; }
 .question-actions .primary-button { padding: 8px 11px; font-size: 10px; }
 .ai-question-answer { margin-top: 12px; border-radius: 8px; background: #fff; color: var(--ink); padding: 12px; }
 .ai-question-answer p { margin: 9px 0 6px; color: #59657b; font-size: 11px; line-height: 1.7; }
+.case-filter, .history-toolbar { font-size: 12px; }
+.case-filter input, .history-toolbar input, .history-toolbar select { font-size: 12px; }
+.case-row { padding-top: 17px; padding-bottom: 17px; }
+.case-number { font-size: 12px; }
+.case-copy strong { font-size: 14px; }
+.case-copy span { margin-top: 6px; font-size: 11px; }
+.case-stage span, .case-due small { font-size: 11px; }
+.status { padding: 6px 9px; font-size: 10px; }
