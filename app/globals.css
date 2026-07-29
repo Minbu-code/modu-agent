@@ -60,3 +60,9 @@ button { cursor: pointer; }
 .case-copy span { margin-top: 6px; font-size: 11px; }
 .case-stage span, .case-due small { font-size: 11px; }
 .status { padding: 6px 9px; font-size: 10px; }
+.case-row-wrap { position: relative; }
+.case-row-wrap .case-row { padding-right: 58px; }
+.case-delete { position: absolute; top: 50%; right: 8px; z-index: 2; border: 0; border-radius: 6px; background: transparent; color: #c97979; padding: 5px 4px; font-size: 10px; transform: translateY(-50%); }
+.case-delete:hover { background: #fff0f0; color: #bd4f52; }
+.delete-confirm-button { background: #c34d50; }
+.delete-confirm-button:hover { background: #a9363a; }
