@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 type Stage = "접수" | "초기 확인" | "조사" | "심의 준비" | "조치" | "종결";
 
@@ -94,6 +94,10 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
+    if (!isSupabaseConfigured) {
+      setDataLoading(false);
+      return () => { mounted = false; };
+    }
     supabase.auth.getSession().then(({ data }) => {
       if (mounted) setSession(data.session);
       if (mounted && data.session) void loadCases(data.session.user.id);
@@ -130,6 +134,11 @@ export default function Home() {
   async function handleAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAuthBusy(true); setAuthError("");
+    if (!isSupabaseConfigured) {
+      setAuthError("Vercel 환경변수에 Supabase URL과 Publishable Key를 등록해 주세요.");
+      setAuthBusy(false);
+      return;
+    }
     const result = authMode === "signin" ? await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword }) : await supabase.auth.signUp({ email: authEmail, password: authPassword });
     if (result.error) setAuthError(result.error.message);
     else if (authMode === "signup" && !result.data.session) setAuthError("가입이 완료되었습니다. 이메일 인증 후 로그인해 주세요.");
