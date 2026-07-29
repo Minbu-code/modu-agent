@@ -210,6 +210,10 @@ export default function Home() {
     }
   }
 
+  if (dataLoading && !session) return (
+    <main className="auth-screen"><div className="auth-card loading-card"><div className="auth-logo"><div className="brand-mark">학</div><div><strong>모두의 학폭비서</strong><span>학교 업무 지원 도구</span></div></div><p className="section-kicker">SECURE WORKSPACE</p><h1>안전한 업무 공간을 준비하고 있어요</h1><p className="auth-copy">로그인 상태와 사안 정보를 확인하는 중입니다.</p><div className="loading-line" /></div></main>
+  );
+
   if (!session && !dataLoading) return (
     <main className="auth-screen"><div className="auth-card"><div className="auth-logo"><div className="brand-mark">학</div><div><strong>모두의 학폭비서</strong><span>학교 업무 지원 도구</span></div></div><p className="section-kicker">SECURE WORKSPACE</p><h1>{authMode === "signin" ? "업무를 이어서 시작하세요" : "담당교사 계정 만들기"}</h1><p className="auth-copy">사안 정보는 로그인한 사용자 본인만 조회할 수 있습니다.</p><form onSubmit={handleAuth}><label>이메일<input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="teacher@school.kr" required /></label><label>비밀번호<input type="password" value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="6자 이상 입력" minLength={6} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-button auth-submit" type="submit" disabled={authBusy}>{authBusy ? "처리 중..." : authMode === "signin" ? "로그인" : "계정 만들기"}</button></form><button className="auth-switch" onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setAuthError(""); }}>{authMode === "signin" ? "처음 사용하시나요? 계정 만들기" : "이미 계정이 있나요? 로그인"}</button><small className="auth-foot">개인정보는 비식별 원칙에 따라 입력해 주세요.</small></div></main>
   );
