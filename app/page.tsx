@@ -114,7 +114,7 @@ export default function Home() {
 
   const selected = cases.find((item) => item.id === selectedId) ?? cases[0];
   const completed = tasks.filter((task) => task.done).length;
-  const nextStage = stages[stages.indexOf(selected.stage) + 1];
+  const nextStage = selected ? stages[stages.indexOf(selected.stage) + 1] : undefined;
   const isClosingConfirmation = nextStage === stages[stages.length - 1];
   const activeCaseCount = cases.filter((item) => item.status !== "종결").length;
   const checkCaseCount = cases.filter((item) => item.status !== "종결" && item.progress < 100).length;
