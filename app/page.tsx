@@ -195,7 +195,8 @@ export default function Home() {
 
   async function registerCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget); const summary = String(form.get("summary") ?? "");
-    if (/(010[- ]?\d{3,4}[- ]?\d{4}|\d{6}[- ]?\d{7}|[가-힣]{2,4}(학생|보호자|교직원)?)/.test(summary)) { setPrivacyWarning("개인을 식별할 수 있는 정보가 포함된 것으로 보입니다. 비식별 정보로 수정해 주세요."); return; }
+    const sensitiveInfoPattern = /(?:01[016789][- ]?\d{3,4}[- ]?\d{4}|\d{6}[- ]?\d{7}|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|(?:이름|성명|학생명|보호자명|연락처|전화번호|주소|학번)\s*[:：]?\s*\S+)/;
+    if (sensitiveInfoPattern.test(summary)) { setPrivacyWarning("개인을 식별할 수 있는 정보가 포함된 것으로 보입니다. 이름·연락처·주소 등을 삭제한 뒤 다시 등록해 주세요."); return; }
     const year = String(form.get("year") || new Date().getFullYear());
     const serial = String(form.get("serial") || "").trim();
     const occurrenceDate = String(form.get("occurrenceDate") || "");
