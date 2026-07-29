@@ -91,3 +91,23 @@ body.large-text .task-header span, body.large-text .task strong, body.large-text
 .danger-settings { border-color: #f3d4d4; background: #fffafa; }
 .danger-outline-button { border: 1px solid #e9a2a2; border-radius: 8px; background: #fff; color: #c34d50; padding: 10px 14px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .danger-outline-button:hover { background: #fff0f0; }
+.route-panel { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 20px; }
+.route-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.route-heading h3 { margin: 0; font-size: 16px; }
+.route-heading p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.route-status { border-radius: 20px; background: #fff5e9; color: #c8833a; padding: 7px 10px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.route-status-ready { background: #edf9f3; color: var(--green); }
+.closure-condition-list { display: grid; gap: 4px; margin-top: 16px; }
+.closure-condition { display: flex; align-items: flex-start; gap: 10px; padding: 11px 8px; border-top: 1px solid var(--line); cursor: pointer; }
+.closure-condition input { position: absolute; opacity: 0; }
+.closure-condition.done { background: #fafbff; }
+.closure-condition.done .checkmark { border-color: var(--blue); background: var(--blue); color: #fff; }
+.closure-condition strong, .closure-condition small { display: block; }
+.closure-condition strong { font-size: 12px; }
+.closure-condition small { margin-top: 5px; color: var(--muted); font-size: 11px; }
+.route-warning { margin: 14px 0 0; border-radius: 7px; background: #fff5e9; color: #af7f45; padding: 11px; font-size: 11px; line-height: 1.5; }
+.route-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 15px; }
+.route-button { border-radius: 8px; padding: 13px; font-size: 12px; font-weight: 700; }
+.principal-route { border: 1px solid #b9c8ff; background: #f3f6ff; color: var(--blue); }
+.review-route { border: 1px solid var(--line); background: #fff; color: #647087; }
+.route-button:hover { border-color: var(--blue); background: var(--blue); color: #fff; }
