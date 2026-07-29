@@ -136,9 +136,11 @@ export default function Home() {
 
   async function toggleTask(index: number) {
     const task = tasks[index]; const nextDone = !task.done;
+    const nextProgress = Math.round(((tasks.filter((item) => item.done).length + (nextDone ? 1 : -1)) / tasks.length) * 100);
     setTasks((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, done: nextDone } : item));
+    setCases((current) => current.map((item) => item.id === selected.id ? { ...item, progress: nextProgress } : item));
     if (session && task.id) await supabase.from("case_tasks").update({ status: nextDone ? "완료" : "대기", completed_at: nextDone ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq("id", task.id).eq("user_id", session.user.id);
-    if (session) await supabase.from("cases").update({ progress_rate: Math.round(((tasks.filter((item) => item.done).length + (nextDone ? 1 : -1)) / tasks.length) * 100), updated_at: new Date().toISOString() }).eq("id", selected.id).eq("user_id", session.user.id);
+    if (session) await supabase.from("cases").update({ progress_rate: nextProgress, updated_at: new Date().toISOString() }).eq("id", selected.id).eq("user_id", session.user.id);
   }
 
   async function advanceStage() {
