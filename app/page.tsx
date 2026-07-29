@@ -195,7 +195,7 @@ export default function Home() {
 
   async function registerCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget); const summary = String(form.get("summary") ?? "");
-    const sensitiveInfoPattern = /(?:01[016789][- ]?\d{3,4}[- ]?\d{4}|\d{6}[- ]?\d{7}|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|(?:이름|성명|학생명|보호자명|연락처|전화번호|주소|학번)\s*[:：]?\s*\S+)/;
+    const sensitiveInfoPattern = /(?:01[016789][- ]?\d{3,4}[- ]?\d{4}|\d{6}[- ]?\d{7}|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|(?:이름|성명|학생명|보호자명|연락처|전화번호|주소|학번)\s*(?:[:：]|은|는|이|가)\s*[^\s,./]{2,})/;
     if (sensitiveInfoPattern.test(summary)) { setPrivacyWarning("개인을 식별할 수 있는 정보가 포함된 것으로 보입니다. 이름·연락처·주소 등을 삭제한 뒤 다시 등록해 주세요."); return; }
     const year = String(form.get("year") || new Date().getFullYear());
     const serial = String(form.get("serial") || "").trim();
