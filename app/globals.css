@@ -43,3 +43,12 @@ button { cursor: pointer; }
 .closure-check strong { font-size: 11px; }
 .closure-check small { margin-top: 5px; color: var(--muted); font-size: 10px; }
 .closure-complete { margin-top: 13px; border-radius: 8px; background: #edf9f3; color: var(--green); padding: 12px; text-align: center; font-size: 11px; font-weight: 700; }
+.ai-question-box { margin-top: 12px; border: 1px solid #6683e2; border-radius: 9px; padding: 13px; background: #17233b; }
+.ai-question-box label { display: block; margin-bottom: 7px; color: #dbe4ff; font-size: 10px; font-weight: 700; }
+.ai-question-box textarea { width: 100%; resize: vertical; border: 1px solid #ffffff33; border-radius: 7px; background: #fff; color: var(--ink); padding: 10px; outline: 0; font-size: 11px; line-height: 1.5; }
+.ai-question-box textarea:focus { border-color: #91aaff; box-shadow: 0 0 0 3px #91aaff26; }
+.question-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 9px; }
+.question-actions .secondary-button { padding: 8px 11px; font-size: 10px; }
+.question-actions .primary-button { padding: 8px 11px; font-size: 10px; }
+.ai-question-answer { margin-top: 12px; border-radius: 8px; background: #fff; color: var(--ink); padding: 12px; }
+.ai-question-answer p { margin: 9px 0 6px; color: #59657b; font-size: 11px; line-height: 1.7; }

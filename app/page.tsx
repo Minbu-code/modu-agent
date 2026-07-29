@@ -111,6 +111,10 @@ export default function Home() {
   const [confirmClosure, setConfirmClosure] = useState(false);
   const [aiMode, setAiMode] = useState<"guide" | "report" | "message">("guide");
   const [aiLoading, setAiLoading] = useState(false);
+  const [questionOpen, setQuestionOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [questionAnswer, setQuestionAnswer] = useState("");
+  const [questionLoading, setQuestionLoading] = useState(false);
 
   const selected = cases.find((item) => item.id === selectedId) ?? cases[0];
   const completed = tasks.filter((task) => task.done).length;
@@ -193,6 +197,25 @@ export default function Home() {
     if (session) await supabase.from("cases").update({ progress_rate: 100, status: "종결", updated_at: new Date().toISOString() }).eq("id", selected.id).eq("user_id", session.user.id);
   }
 
+  function askAiQuestion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const submittedQuestion = question.trim();
+    if (!submittedQuestion) return;
+    setQuestionLoading(true); setQuestionAnswer("");
+    window.setTimeout(() => {
+      const pendingTasks = tasks.filter((task) => !task.done).slice(0, 3).map((task) => task.title).join(", ");
+      const normalized = submittedQuestion.toLowerCase();
+      const answer = normalized.includes("보호자") || normalized.includes("안내")
+        ? `현재 ${selected.stage} 단계에서는 확인된 사실과 추가 확인이 필요한 내용을 구분한 뒤, 보호자에게는 확인된 절차와 다음 안내 시점만 중립적으로 전달하는 것이 좋습니다. 학생을 특정할 수 있는 정보나 판단을 단정하는 표현은 제외하세요.`
+        : normalized.includes("보고") || normalized.includes("문서")
+          ? `보고서나 문서는 ${selected.number} 사안의 확인된 사실, 진행 경과, 남은 업무를 중심으로 작성하세요. 현재 단계의 남은 업무는 ${pendingTasks || "없습니다"}이며, 제출 전 담당교사가 사실관계와 학교 지침을 최종 확인해야 합니다.`
+          : normalized.includes("다음") || normalized.includes("업무") || normalized.includes("뭐")
+            ? `현재 단계는 ${selected.stage}입니다. 우선 처리할 업무는 ${pendingTasks || "현재 단계의 체크리스트가 모두 완료되었습니다"}입니다. 확인되지 않은 내용은 추정으로 기록하지 말고, 체크리스트 완료 후 다음 단계 이동 여부를 다시 확인하세요.`
+            : `질문하신 내용은 현재 ${selected.stage} 단계의 업무와 관련해 확인된 사실을 기준으로 검토하는 것이 좋습니다. ${pendingTasks ? `현재 남은 업무는 ${pendingTasks}입니다.` : "현재 단계의 체크리스트는 모두 완료되었습니다."} AI 답변은 참고용이므로 실제 처리 전 담당교사의 최종 확인이 필요합니다.`;
+      setQuestionAnswer(answer); setQuestionLoading(false);
+    }, 450);
+  }
+
   async function registerCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget);
     const year = String(form.get("year") || new Date().getFullYear());
@@ -213,7 +236,7 @@ export default function Home() {
   if (dataLoading) return <main className="auth-screen"><div className="auth-card loading-card"><div className="auth-logo"><img className="brand-mark brand-logo" src="/modu-logo.png" alt="모두의 학폭비서 로고" /><div><strong>모두의 학폭비서</strong><span>학교 업무 지원 도구</span></div></div><p className="section-kicker">SECURE WORKSPACE</p><h1>안전한 업무 공간을 준비하고 있어요</h1><p className="auth-copy">로그인 상태와 사안 정보를 확인하는 중입니다.</p><div className="loading-line" /></div></main>;
   if (!session) return <main className="auth-screen"><div className="auth-card"><div className="auth-logo"><img className="brand-mark brand-logo" src="/modu-logo.png" alt="모두의 학폭비서 로고" /><div><strong>모두의 학폭비서</strong><span>학교 업무 지원 도구</span></div></div><p className="section-kicker">SECURE WORKSPACE</p><h1>{authMode === "signin" ? "업무를 이어서 시작하세요" : "담당교사 계정 만들기"}</h1><p className="auth-copy">사안 정보는 로그인한 사용자 본인만 조회할 수 있습니다.</p><form onSubmit={handleAuth}><label>이메일<input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="teacher@school.kr" required /></label><label>비밀번호<input type="password" value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} placeholder="6자 이상 입력" minLength={6} required /></label>{authError && <div className="auth-error">{authError}</div>}<button className="primary-button auth-submit" type="submit" disabled={authBusy}>{authBusy ? "처리 중..." : authMode === "signin" ? "로그인" : "계정 만들기"}</button></form><button className="auth-switch" onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setAuthError(""); }}>{authMode === "signin" ? "처음 사용하시나요? 계정 만들기" : "이미 계정이 있나요? 로그인"}</button><small className="auth-foot">개인정보는 비식별 원칙에 따라 입력해 주세요.</small></div></main>;
 
-  const renderAiPanel = (compact = false) => <section className={compact ? "ai-panel" : "panel ai-full-panel"}><div className="ai-header"><div className="ai-orb">✦</div><div><p className="section-kicker">AI 업무 도우미</p><h2>지금 무엇을 도와드릴까요?</h2></div></div><p className="ai-caption">선택한 사안의 비식별 정보만 사용합니다. AI 결과는 참고용 초안이며 담당교사의 최종 확인이 필요합니다.</p><div className="ai-tabs"><button className={aiMode === "guide" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("guide")}>업무 안내</button><button className={aiMode === "report" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("report")}>보고서 초안</button><button className={aiMode === "message" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("message")}>안내 문구</button></div><div className="ai-result"><span className="result-label">{aiMode === "guide" ? "NEXT STEP" : aiMode === "report" ? "REPORT DRAFT" : "MESSAGE DRAFT"}</span><p>{aiLoading ? "초안을 준비하고 있습니다..." : aiContent}</p><div className="result-actions"><button onClick={() => navigator.clipboard?.writeText(aiContent)}>복사</button><button onClick={() => { setAiLoading(true); window.setTimeout(() => setAiLoading(false), 650); }}>↻ 다시 생성</button><button onClick={saveDocument}>문서로 저장</button></div></div><button className="ask-button" onClick={() => setAiMode("guide")}>✦ AI에게 질문하기</button></section>;
+  const renderAiPanel = (compact = false) => <section className={compact ? "ai-panel" : "panel ai-full-panel"}><div className="ai-header"><div className="ai-orb">✦</div><div><p className="section-kicker">AI 업무 도우미</p><h2>지금 무엇을 도와드릴까요?</h2></div></div><p className="ai-caption">선택한 사안의 비식별 정보만 사용합니다. AI 결과는 참고용 초안이며 담당교사의 최종 확인이 필요합니다.</p><div className="ai-tabs"><button className={aiMode === "guide" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("guide")}>업무 안내</button><button className={aiMode === "report" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("report")}>보고서 초안</button><button className={aiMode === "message" ? "ai-tab active" : "ai-tab"} onClick={() => setAiMode("message")}>안내 문구</button></div><div className="ai-result"><span className="result-label">{aiMode === "guide" ? "NEXT STEP" : aiMode === "report" ? "REPORT DRAFT" : "MESSAGE DRAFT"}</span><p>{aiLoading ? "초안을 준비하고 있습니다..." : aiContent}</p><div className="result-actions"><button onClick={() => navigator.clipboard?.writeText(aiContent)}>복사</button><button onClick={() => { setAiLoading(true); window.setTimeout(() => setAiLoading(false), 650); }}>↻ 다시 생성</button><button onClick={saveDocument}>문서로 저장</button></div></div><button className="ask-button" onClick={() => setQuestionOpen((current) => !current)}>✦ AI에게 질문하기</button>{questionOpen && <div className="ai-question-box"><form onSubmit={askAiQuestion}><label htmlFor="ai-question">원하는 질문을 입력하세요</label><textarea id="ai-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="예: 지금 단계에서 보호자에게 무엇을 안내해야 하나요?" rows={3} required /><div className="question-actions"><button type="button" className="secondary-button" onClick={() => { setQuestionOpen(false); setQuestionAnswer(""); }}>닫기</button><button type="submit" className="primary-button">{questionLoading ? "답변 준비 중..." : "질문하기"}</button></div></form>{questionAnswer && <div className="ai-question-answer"><span className="result-label">AI ANSWER</span><p>{questionAnswer}</p><button className="text-button" onClick={() => navigator.clipboard?.writeText(questionAnswer)}>답변 복사</button></div>}</div>}</section>;
 
   let pageContent: React.ReactNode;
   if (!cases.length) pageContent = <section className="page-panel empty-case-panel"><div className="empty-state"><div>▤</div><h3>등록된 사안이 없습니다</h3><p>사안을 등록하면 이곳에서 체크리스트와 진행 상황을 관리할 수 있습니다.</p><button className="primary-button" onClick={() => setShowRegister(true)}>+ 첫 사안 등록하기</button></div></section>;
